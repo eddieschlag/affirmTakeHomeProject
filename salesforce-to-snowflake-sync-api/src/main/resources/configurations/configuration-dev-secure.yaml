@@ -1,0 +1,12 @@
+salesforce:
+  username: "![iTaqIGtvpW9QAllbqEZMDdvPkkQqUNnigAy5AyP2hgE=]"
+  password: "![fbauVuy745KEtBkzfjBbog==]"
+  securityToken: "![apdEdkgHydS3UIcTP1/BwXBe9JjDS/bZmeZRyGqFdeE=]"
+  
+snowflake:
+  account: "s96PjFOHnhfMFfQpRs5YZ19Y4YJ5TXJdTOIHXbM7Fcs="
+  warehouse: "B7c79bsdsTHAEk3BJJ5KdGjmV3PNBuCNuOnlw2e/92E="
+  database: "E0wRon2qCBR6Fv3/xEmDHelrCJK6OHFJk/DxWW4dSYw="
+  schema: "tDpE65NvxFwDZqAGYoxG5w=="
+  user: "Jrs4pkcoeWxznnC5uaI/XQ=="
+  password: "vx3tV5fpbm7rjLfARtCOaltqfj1gDzMYX1c8XN6ZTlU="

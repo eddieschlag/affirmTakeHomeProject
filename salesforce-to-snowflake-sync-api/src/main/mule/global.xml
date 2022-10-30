@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:snowflake="http://www.mulesoft.org/schema/mule/snowflake"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/snowflake http://www.mulesoft.org/schema/mule/snowflake/current/mule-snowflake.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="dff5343c-424b-40ba-87e9-6f7015958ced" file="configurations/configuration-${mule.env}.yaml" />
+	<global-property doc:name="Global Property" doc:id="bb0f5f6f-0edc-4e27-9a50-b296c7476bb1" name="mule.env" value="dev" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="be43067c-ba08-47aa-acf6-414084a36a13" file="configurations/configuration-${mule.env}-secure.yaml" key="${mule.key}" />
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="b5ea280c-3ec7-4dd0-a356-4745d9821cc2" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="e3dc8740-0c0d-46d4-90c3-5d81e77ddff5" >
+		<salesforce:basic-connection username="${secure::salesforce.username}" password="${secure::salesforce.password}" securityToken="${secure::salesforce.securityToken}" />
+	</salesforce:sfdc-config>
+	<global-property doc:name="Global Property" doc:id="9f0d6c7b-ab8f-4841-a510-34d237c181b6" name="mule.key" value="mulesoft12345678" />
+	<snowflake:snowflake-config name="Snowflake_Config" doc:name="Snowflake Config" doc:id="edcb9a09-90f8-4c65-bb94-653c0b206d3d" >
+		<snowflake:snowflake-connection accountName="${secure::snowflake.account}" warehouse="${secure::snowflake.warehouse}" database="${secure::snowflake.database}" schema="${secure::snowflake.schema}" user="${secure::snowflake.user}" password="${secure::snowflake.password}" />
+	</snowflake:snowflake-config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="75263b25-a2ed-4c76-b701-d8ed695b8e4d" environment="${mule.env}" />
+</mule>

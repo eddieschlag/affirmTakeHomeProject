@@ -1,0 +1,9 @@
+%dw 2.0
+
+type auto_3a9d6379_a7c2_4f9f_993a_ccdabd08c0ba_Input_Variables_recordExists = Array<{ _?: java_lang_Object }>
+type java_lang_Object = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+

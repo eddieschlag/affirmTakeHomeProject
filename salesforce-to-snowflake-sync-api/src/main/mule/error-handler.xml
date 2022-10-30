@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<error-handler name="generalErrorHandler"
+		doc:id="599c2f37-367a-4834-8d75-ee59982a4367">
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="4939bcbd-f92a-4da4-872b-215c48fd5cff"
+			type="APIKIT:BAD_REQUEST">
+			<set-variable value="#[400]"
+				doc:name="Copy_of_Set the HTTP Status - 400"
+				doc:id="52851684-0984-44a6-9d06-2d5768de273b"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="38dbe883-e479-4c50-ae98-c0bb241cd7d6"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="2706036d-2f0c-44be-bda2-8d23e2676598" type="APIKIT:NOT_FOUND">
+			<set-variable value="#[404]"
+				doc:name="Copy_of_Set the HTTP Status - 404"
+				doc:id="4a364574-d754-4a57-92f0-07a7f8783a3a"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="1de7644a-337f-48a8-b31f-905d41068f77"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="ab4e7d05-0472-4fdb-ac07-4de759fc321d"
+			type="APIKIT:METHOD_NOT_ALLOWED">
+			<set-variable value="#[405]"
+				doc:name="Copy_of_Set the HTTP Status - 405"
+				doc:id="5263906f-ba80-433b-9e8b-95591abc7f55"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="1edee158-e0dd-49c2-a653-e9c634c997d6"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="e03d08f7-80ad-4420-8c25-e6f926cd3a6f"
+			type="APIKIT:NOT_ACCEPTABLE">
+			<set-variable value="#[406]"
+				doc:name="Copy_of_Set the HTTP Status - 406"
+				doc:id="1780a0a3-c06f-40aa-9a80-ffa99a965fc8"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="dc17bd24-9c2f-4538-a5ba-2ac4712da0cd"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="675c3a11-f949-4780-a106-2a28c9e26fc2"
+			type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+			<set-variable value="#[415]"
+				doc:name="Copy_of_Set the HTTP Status - 415"
+				doc:id="15228fe0-f7b6-439b-9cc8-c485a463df2b"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="bb7cb29b-e64b-4214-9aec-fe2dfd5704dd"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="ac1ed994-7aa0-4d82-b5c0-74b96404c200"
+			type="APIKIT:NOT_IMPLEMENTED">
+			<set-variable value="#[501]"
+				doc:name="Copy_of_Set the HTTP Status - 501"
+				doc:id="4a3214c1-6c8f-492f-94a3-a7e0764f8753"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="90b79123-324c-45ce-9910-d9421b2d0f5d"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="55f0e5f0-e56a-4a7e-aba8-f87f933a929d" type="HTTP:BAD_REQUEST">
+			<set-variable value="#[400]"
+				doc:name="Copy_of_Set the HTTP Status - 400"
+				doc:id="b84bc066-2cda-40ec-999e-020782c2785f"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="ca6c39ae-dd1c-4bcf-8d5b-b033fb95c9d1"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="e582c493-5b35-44e4-b784-8c882a474163"
+			type="HTTP:CLIENT_SECURITY">
+			<set-variable value="#[401]"
+				doc:name="Copy_of_Set the HTTP Status - 401"
+				doc:id="e1a523f1-9801-4e6f-ae7a-293a164a545a"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="3360475a-2812-455f-9902-f47f0d049872"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="116335eb-8ca2-44d6-9d73-caabd1bf6337" type="HTTP:FORBIDDEN">
+			<set-variable value="#[403]"
+				doc:name="Copy_of_Set the HTTP Status - 403"
+				doc:id="2a5c8822-ccd9-48b1-9fe3-60a7fcd1fd7d"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="2e8c8121-8f6e-4a9f-b703-33f7be4c57ed"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="1408f30d-ce00-4f8b-97b5-95add94e29ed" type="HTTP:FORBIDDEN">
+			<set-variable value="#[403]"
+				doc:name="Copy_of_Set the HTTP Status - 403"
+				doc:id="c01540eb-656c-4f0d-acb6-e7509ade6345"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="892d667a-8798-4836-9f94-789e2fd01106"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="bce8c763-18ac-45cf-bd61-15b5b8f6d5cd"
+			type="HTTP:METHOD_NOT_ALLOWED">
+			<set-variable value="#[405]"
+				doc:name="Copy_of_Set the HTTP Status - 405"
+				doc:id="b3f278c3-188c-4a5b-89f1-fef14bf3a366"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="c69ff6b6-c55a-4ee9-a090-bf15981fb36f"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="778c0a20-48e1-4e50-9626-9913028d07af"
+			type="HTTP:NOT_ACCEPTABLE">
+			<set-variable value="#[406]"
+				doc:name="Copy_of_Set the HTTP Status - 406"
+				doc:id="383bce78-3fd2-44cd-99b6-80989e0bf6a6"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="9edd465e-d56e-4075-91c8-5e6ef35084f8"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="b4f27905-0566-4b5f-a774-030f5a294819" type="HTTP:NOT_FOUND">
+			<set-variable value="#[404]"
+				doc:name="Copy_of_Set the HTTP Status - 404"
+				doc:id="dd7b6f27-8442-4564-a13a-4bf696492372"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="54280be1-3f4f-49b4-9b54-4802ef089fa1"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="ebc7f13e-66bc-45d7-bf77-6f7cfcd1a042" type="HTTP:PARSING">
+			<set-variable value="#[400]"
+				doc:name="Copy_of_Set the HTTP Status - 400"
+				doc:id="ff7c6d91-5d04-4d36-ab0b-bfc0e0087f0f"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="bd1bee97-3bb4-4031-9ac3-e67d6aeae757"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="Copy_of_On Error Propagate"
+			doc:id="a6f6c2df-ab78-4952-acb1-89dc972befc9" type="HTTP:SECURITY">
+			<set-variable value="#[401]"
+				doc:name="Copy_of_Set the HTTP Status - 401"
+				doc:id="fb7152c2-b746-4259-a954-017e9f7a165c"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="01909f5f-1d5d-4a11-ab5e-0d1e0a3e9135"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="d4c2d9f7-e9c3-4c78-9936-4d64806f98dd"
+			type="HTTP:TOO_MANY_REQUESTS">
+			<set-variable value="#[429]"
+				doc:name="Copy_of_Set the HTTP Status - 429"
+				doc:id="923220fd-f0ba-4e0b-a767-11497a3e79c5"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="f79c3cc4-2edf-4463-a30f-4fdab2f7bfed"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="d4689254-2d98-4997-aca5-2ed7d1cce4b6"
+			type="HTTP:UNAUTHORIZED">
+			<set-variable value="#[403]"
+				doc:name="Copy_of_Set the HTTP Status - 403"
+				doc:id="b75d1692-0dcf-4bc3-936f-b1e522aa91a2"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="d9da66fb-d42c-4893-862c-c9b9573c6783"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="9cfa6c0a-9d3a-4093-a684-0b3a9e7dbc9d"
+			type="HTTP:UNSUPPORTED_MEDIA_TYPE">
+			<set-variable value="#[415]"
+				doc:name="Copy_of_Set the HTTP Status - 415"
+				doc:id="6e74e416-5bdd-429d-9e71-a074be36fec4"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="a94638c7-957d-4f6e-ab70-27bc58dbf801"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="d6b433ad-124a-464d-b420-1f83c0432aa9" type="ANY">
+			<set-variable value="#[500]"
+				doc:name="Copy_of_Set the HTTP Status - 500"
+				doc:id="99bb4789-decd-4a1f-a8a5-600e4f04c2f9"
+				variableName="httpStatus" />
+			<flow-ref doc:name="Copy_of_Global Build Exception"
+				doc:id="08b45963-c572-477d-b3f7-bc78394fbdc5"
+				name="buildExceptionFlow" />
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="buildExceptionFlow"
+		doc:id="f752a180-2028-4d58-b631-ae54434c41fe">
+		<ee:transform doc:name="Copy_of_Create Error Message"
+			doc:id="4b556237-0a3d-4ac8-85e9-433545132fe6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+					output application/json skipNullOn="everywhere"
+					---
+					
+					{
+					"error" : {
+					"apiName": p("app.name"),
+					"apiVersion": p("app.version"),
+					"correlationId" : correlationId,
+					"errorDetails" : {
+					"description" : "An error occurred - errorType: " ++ error.errorType.identifier as String default "NOT AVAILABLE" ++ " - see native error details",
+					"status": 'HTTP-' ++ vars.httpStatus as String default "500",
+					"timeStamp": now(),
+					"nativeError": {
+					"description": error.description,
+					"detailedDescription": error.detailedDescription default "NOT AVAILABLE",
+					//error.exception.errorMessage.attributes.reasonPhrase default (error.detailedDescription default "NOT AVAILABLE"),
+					//error.detailedDescription default "NOT AVAILABLE",
+					"errorType": error.errorType,
+					"errorMessage": error.errorMessage,
+					"childErrors": error.childErrors
+					}
+					}
+					}
+					}
+					]]>
+				</ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<json-logger:logger doc:name="Logger" doc:id="03ca6ae7-0267-4267-a350-d4e3921e9822" config-ref="JSON_Logger_Config" message="error message" tracePoint="EXCEPTION" priority="ERROR"/>
+	
+</sub-flow>
+</mule>

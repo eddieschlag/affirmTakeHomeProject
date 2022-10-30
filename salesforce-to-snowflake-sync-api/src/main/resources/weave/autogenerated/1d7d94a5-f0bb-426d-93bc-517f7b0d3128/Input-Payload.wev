@@ -1,0 +1,13 @@
+%dw 2.0
+
+type auto_1d7d94a5_f0bb_426d_93bc_517f7b0d3128_Input_Payload = {|
+  case_number: Any, 
+  origin: Any, 
+  reason: Any, 
+  contact_email: Any, 
+  country: Any, 
+  created_date: Any, 
+  closed_date: Any, 
+  last_modified: Any
+|}
+

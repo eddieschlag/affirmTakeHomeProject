@@ -1,0 +1,12 @@
+scheduler:
+  cron: "0 0 0 ? * * *"
+  
+json:
+  logger:
+    application:
+      name: "salesforce-to-snowflake-sync-api"
+      version: "v1"
+      
+app:
+  name: "salesforce-to-snowflake-sync-api"
+  version: "v1"

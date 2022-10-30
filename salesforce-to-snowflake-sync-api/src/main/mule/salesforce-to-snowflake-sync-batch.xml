@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:snowflake="http://www.mulesoft.org/schema/mule/snowflake"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/snowflake http://www.mulesoft.org/schema/mule/snowflake/current/mule-snowflake.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<flow name="salesforce-to-snowflake-sync-api-USA" doc:id="3bfefea2-aa0f-4d24-a8a7-dffb327314f0" >
+		<os:retrieve doc:name="Retrieve lastRunTimeUSA" doc:id="b16ad720-ae9a-48d2-98ee-97a1ae0f7b79" key="lastRunTimeUSA" objectStore="Object_store">
+			<os:default-value ><![CDATA[#[now()]]]></os:default-value>
+		</os:retrieve>
+		<salesforce:query doc:name="Query Salesforce for Case" doc:id="7a86185b-6e69-498f-925e-25f895e8fa86" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT CaseNumber, Origin, Reason, ContactEmail, Country__c, CreatedDate, ClosedDate, LastModifiedDate from Case where Case.LastModifiedDate > :lastRunTime and Case.Country__c == 'USA']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"lastRunTime" : vars.lastRunTimeUSA
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<batch:job jobName="salesforce-to-snowflake-sync-api-USABatch_Job" doc:id="ddd1bd75-a049-4266-9141-ea299692c176" >
+			<batch:process-records >
+				<batch:step name="queryExistingCaseInDbBatch_Step" doc:id="3dbd5890-0503-4729-932a-17aef977cd50" >
+					<snowflake:select doc:name="Select" doc:id="27991d0e-a415-4c9b-bf29-93677a32cfa1" config-ref="Snowflake_Config" target="recordExists" targetValue="#[payload[0]]">
+						<snowflake:sql ><![CDATA[SELECT case_number, origin, reason, contact_email, country, created_date, closed_date FROM case_usa where case_number = :caseNumber]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{ 'caseNumber': payload.CaseNumber }]]]></snowflake:input-parameters>
+					</snowflake:select>
+					<ee:transform doc:name="Transform SFDC Case to Snowflake" doc:id="18cc3304-bf1e-4585-b79d-4ed43d69c5fb" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"case_number":  payload.CaseNumber,
+	"origin":  payload.Origin,
+	"reason": payload.Reason,
+	"contact_email": payload.ContactEmail,
+	"country": payload.Country__c,
+	"created_date": payload.CreatedDate,
+	"closed_date": payload.ClosedDate,
+	"last_modified": payload.LastModifiedDate
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</batch:step>
+				<batch:step name="insertCaseIntoSnowflake_Step" doc:id="45b84140-8d89-40b8-8845-c90f35b91776" acceptExpression="vars.recordExists == null">
+					<snowflake:insert doc:name="Insert" doc:id="d0bf561c-338e-4e3b-b7aa-fc626a0b8f2a" config-ref="Snowflake_Config">
+						<snowflake:sql ><![CDATA[INSERT INTO case_usa (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:insert>
+				</batch:step>
+				<batch:step name="updateCaseIntoSnowflake_Step" doc:id="a0f31922-6aa4-49e8-b634-c25b85ecd150" acceptExpression="vars.recordExists != null">
+					<snowflake:update doc:name="Update" doc:id="67d30714-4583-462e-ad58-473716f8bb06" config-ref="Snowflake_Config">
+						<snowflake:sql ><![CDATA[UPDATE case_usa SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:update>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<json-logger:logger doc:name="Logger" doc:id="1c6219cc-1e5c-4243-8ee4-825fef31d5c1" config-ref="JSON_Logger_Config" message="Batch job SFDC -&gt; Snowflake for USA has been completed." tracePoint="END"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<flow name="salesforce-to-snowflake-sync-api-CAN" doc:id="d27138ed-db45-47e6-982a-120a94bab8cf" >
+		<os:retrieve doc:name="Retrieve lastRunTimeCAN" doc:id="39ff8baf-9b1a-4fd7-80e8-6b4cd43c739a" key="lastRunTimeCAN" objectStore="Object_store" >
+			<os:default-value ><![CDATA[#[now()]]]></os:default-value>
+		</os:retrieve>
+		<salesforce:query doc:name="Query Salesforce for Case" doc:id="06b6ba1f-0543-47c5-be8b-df27f363d430" config-ref="Salesforce_Config" >
+			<salesforce:salesforce-query ><![CDATA[SELECT CaseNumber, Origin, Reason, ContactEmail, Country__c, CreatedDate, ClosedDate, LastModifiedDate from Case where Case.LastModifiedDate > :lastRunTime and Case.Country__c == 'CAN']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"lastRunTime" : vars.lastRunTimeCAN
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<batch:job jobName="salesforce-to-snowflake-sync-api-CANBatch_Job" doc:id="a270bea5-2d91-45a0-b568-f2cb6909b0de" >
+			<batch:process-records >
+				<batch:step name="queryExistingCaseInDbBatch_Step" doc:id="d4bacc99-23de-43a6-be06-14096482c4c6" >
+					<snowflake:select doc:name="Select" doc:id="eefe4ce1-ab6f-48c5-8168-e215726c547a" config-ref="Snowflake_Config" target="recordExists" targetValue="#[payload[0]]" >
+						<snowflake:sql ><![CDATA[SELECT case_number, origin, reason, contact_email, country, created_date, closed_date FROM case_can where case_number = :caseNumber]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{ 'caseNumber': payload.CaseNumber }]]]></snowflake:input-parameters>
+					</snowflake:select>
+					<ee:transform doc:name="Transform SFDC Case to Snowflake" doc:id="2c782cfa-ac5f-4d6b-bd4a-606ffe4a9b26" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"case_number":  payload.CaseNumber,
+	"origin":  payload.Origin,
+	"reason": payload.Reason,
+	"contact_email": payload.ContactEmail,
+	"country": payload.Country__c,
+	"created_date": payload.CreatedDate,
+	"closed_date": payload.ClosedDate,
+	"last_modified": payload.LastModifiedDate
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</batch:step>
+				<batch:step name="insertCaseIntoSnowflake_Step" doc:id="fb8937ca-0a58-4c89-a141-deab262a1e22" acceptExpression="vars.recordExists == null" >
+					<snowflake:insert doc:name="Insert" doc:id="0f967a6b-75cc-482d-8423-db743a1ec29b" config-ref="Snowflake_Config" >
+						<snowflake:sql ><![CDATA[INSERT INTO case_can (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:insert>
+				</batch:step>
+				<batch:step name="updateCaseIntoSnowflake_Step" doc:id="1d723c09-5df4-4249-8d6b-a1076954eb38" acceptExpression="vars.recordExists != null" >
+					<snowflake:update doc:name="Update" doc:id="826470a2-0afd-4673-9152-81e0165c0cc5" config-ref="Snowflake_Config" >
+						<snowflake:sql ><![CDATA[UPDATE case_can SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:update>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<json-logger:logger doc:name="Logger" doc:id="272b68f7-fbc0-4e4f-9db1-50415662accc" config-ref="JSON_Logger_Config" message="Batch job SFDC -&gt; Snowflake for CAN has been completed." tracePoint="END" />
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<flow name="salesforce-to-snowflake-sync-api-AUS" doc:id="8d1c9f88-5be3-466a-94a4-4ebbef4434dd" >
+		<os:retrieve doc:name="Retrieve lastRunTimeAUS" doc:id="8ea4c226-26c1-4e9e-8fef-c7636711a4d9" key="lastRunTimeAUS" objectStore="Object_store" >
+			<os:default-value ><![CDATA[#[now()]]]></os:default-value>
+		</os:retrieve>
+		<salesforce:query doc:name="Query Salesforce for Case" doc:id="eee7cdd7-6157-4502-b266-d08f21845e36" config-ref="Salesforce_Config" >
+			<salesforce:salesforce-query ><![CDATA[SELECT CaseNumber, Origin, Reason, ContactEmail, Country__c, CreatedDate, ClosedDate, LastModifiedDate from Case where Case.LastModifiedDate > :lastRunTime and Case.Country__c == 'AUS']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"lastRunTime" : vars.lastRunTimeAUS
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<batch:job jobName="salesforce-to-snowflake-sync-api-AUSBatch_Job" doc:id="56de2f54-17f3-4af0-ae50-c081d62195b4" >
+			<batch:process-records >
+				<batch:step name="queryExistingCaseInDbBatch_Step" doc:id="c5a371e6-ad19-4f6c-8bc2-36fb245f427c" >
+					<snowflake:select doc:name="Select" doc:id="f587327f-7b84-4768-a31a-36628820bc46" config-ref="Snowflake_Config" target="recordExists" targetValue="#[payload[0]]" >
+						<snowflake:sql ><![CDATA[SELECT case_number, origin, reason, contact_email, country, created_date, closed_date FROM case_aus where case_number = :caseNumber]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{ 'caseNumber': payload.CaseNumber }]]]></snowflake:input-parameters>
+					</snowflake:select>
+					<ee:transform doc:name="Transform SFDC Case to Snowflake" doc:id="7aaf0e13-ada2-41f5-a6cf-f451caa85b0a" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"case_number":  payload.CaseNumber,
+	"origin":  payload.Origin,
+	"reason": payload.Reason,
+	"contact_email": payload.ContactEmail,
+	"country": payload.Country__c,
+	"created_date": payload.CreatedDate,
+	"closed_date": payload.ClosedDate,
+	"last_modified": payload.LastModifiedDate
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</batch:step>
+				<batch:step name="insertCaseIntoSnowflake_Step" doc:id="17738cec-7583-4496-b283-ff589eccb50d" acceptExpression="vars.recordExists == null" >
+					<snowflake:insert doc:name="Insert" doc:id="b7b8f87f-4f83-447f-bf3f-ede401a44c9c" config-ref="Snowflake_Config" >
+						<snowflake:sql ><![CDATA[INSERT INTO case_aus (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:insert>
+				</batch:step>
+				<batch:step name="updateCaseIntoSnowflake_Step" doc:id="85f1feec-8850-4e47-9af1-d6fd08c2b636" acceptExpression="vars.recordExists != null" >
+					<snowflake:update doc:name="Update" doc:id="d63d3974-a926-4429-b246-c0669c94c70f" config-ref="Snowflake_Config" >
+						<snowflake:sql ><![CDATA[UPDATE case_aus SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+						<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+					</snowflake:update>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<json-logger:logger doc:name="Logger" doc:id="065b8a14-ca7c-4698-b798-3e13b18706c5" config-ref="JSON_Logger_Config" message="Batch job SFDC -&gt; Snowflake for AUS completed." tracePoint="END" />
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<flow name="pollerFlowUSA" doc:id="8502f70c-a512-45d1-ab5d-68e6416c9fa9" >
+		<scheduler doc:name="Scheduler" doc:id="ca1fbbf0-47dc-4c7d-b909-c41dd03579c0" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.cron}" />
+			</scheduling-strategy>
+		</scheduler>
+		<os:store doc:name="Store lastRunTimeUSA" doc:id="e1b676a8-04f4-4283-b8b7-264540cd7e7d" key="lastRunTimeUSA" objectStore="Object_store">
+			<os:value ><![CDATA[#[now()]]]></os:value>
+		</os:store>
+		<flow-ref doc:name="salesforce-to-snowflake-sync-api-USA" doc:id="2abd8e43-81f8-4c61-a04d-4882721bfc07" name="salesforce-to-snowflake-sync-api-USA"/>
+	</flow>
+	<flow name="pollerFlowCAN" doc:id="e8402f13-b1b8-4061-8870-5738968ae383" >
+		<scheduler doc:name="Scheduler" doc:id="6f733ddd-0978-4ad3-9ad9-baa13dc42c40" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.cron}" />
+			</scheduling-strategy>
+		</scheduler>
+		<os:store doc:name="Store lastRunTimeCAN" doc:id="5010f5cc-83e1-4bb1-bf83-64c4734b3862" key="lastRunTimeCAN" objectStore="Object_store" >
+			<os:value ><![CDATA[#[now()]]]></os:value>
+		</os:store>
+		<flow-ref doc:name="salesforce-to-snowflake-sync-api-CAN" doc:id="d8d819cb-e73c-4686-8161-71e7eb297524" name="salesforce-to-snowflake-sync-api-CAN" />
+	</flow>
+	<flow name="pollerFlowAUS" doc:id="f727e26c-6145-4ef9-b404-17128887bdf7" >
+		<scheduler doc:name="Scheduler" doc:id="fd3137f9-482e-4f64-85f4-a500c7e457f2" >
+			<scheduling-strategy >
+				<cron expression="${scheduler.cron}" />
+			</scheduling-strategy>
+		</scheduler>
+		<os:store doc:name="Store lastRunTimeAUS" doc:id="57a52b6f-6d61-4ab9-a7bb-362ef837afec" key="lastRunTimeAUS" objectStore="Object_store" >
+			<os:value ><![CDATA[#[now()]]]></os:value>
+		</os:store>
+		<flow-ref doc:name="salesforce-to-snowflake-sync-api-AUS" doc:id="77c6d9a4-155d-48e9-aa67-13d797997926" name="salesforce-to-snowflake-sync-api-AUS" />
+	</flow>
+</mule>

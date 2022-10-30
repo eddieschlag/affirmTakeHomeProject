@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:snowflake="http://www.mulesoft.org/schema/mule/snowflake"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/snowflake http://www.mulesoft.org/schema/mule/snowflake/current/mule-snowflake.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd">
+	<flow name="salesforce-to-snowflake-sync-real-time-Flow" doc:id="c1190eb8-f0a4-43d3-8bef-b0cf18d30ba7" >
+		<salesforce:subscribe-topic-listener doc:name="Subscribe topic listener" doc:id="af74f952-4e33-40bf-987d-348422084b90" config-ref="Salesforce_Config"/>
+		<snowflake:select doc:name="Check if Case exists" doc:id="64a1b7b7-39fb-4f75-8986-ebacf97c465a" config-ref="Snowflake_Config" target="recordExists">
+			<snowflake:sql><![CDATA[SELECT case_number, origin, reason, contact_email, country, created_date, closed_date FROM case_can where case_number = :caseNumber]]></snowflake:sql>
+			<snowflake:input-parameters><![CDATA[#[{ 'caseNumber': payload.CaseNumber }]]]></snowflake:input-parameters>
+		</snowflake:select>
+		<ee:transform doc:name="Transform SFDC to Snowflake" doc:id="4e97688f-17b3-49b1-ae14-5fc0a9155b05" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"case_number":  payload.CaseNumber,
+	"origin":  payload.Origin,
+	"reason": payload.Reason,
+	"contact_email": payload.ContactEmail,
+	"country": payload.Country__c,
+	"created_date": payload.CreatedDate,
+	"closed_date": payload.ClosedDate,
+	"last_modified": payload.LastModifiedDate
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="d9c0010e-bac9-4798-9940-87b857a4f4fb" >
+			<when expression="#[payload.country == 'USA']">
+				<flow-ref doc:name="salesforce-to-snowflake-sync-real-time-USA-Sub_Flow" doc:id="8e8a4bb2-fad8-4880-8494-cc5aea09fd7c" name="salesforce-to-snowflake-sync-real-time-USA-Sub_Flow"/>
+			</when>
+			<when expression="#[payload.country == 'CAN']">
+				<flow-ref doc:name="salesforce-to-snowflake-sync-real-time-CAN-Sub_Flow" doc:id="47e746a4-a397-4348-812c-51a3b5d05ee3" name="salesforce-to-snowflake-sync-real-time-CAN-Sub_Flow"/>
+			</when>
+			<when expression="#[payload.country == 'AUS']">
+				<flow-ref doc:name="salesforce-to-snowflake-sync-real-time-AUS-Sub_Flow" doc:id="97580f02-9260-4e90-902c-31a593f43e92" name="salesforce-to-snowflake-sync-real-time-AUS-Sub_Flow"/>
+			</when>
+			<otherwise >
+				<json-logger:logger doc:name="Logger" doc:id="9b291eb2-d1b9-4253-be26-ae81882908fe" config-ref="JSON_Logger_Config" message="country does not match USA, CAN, AUS" tracePoint="FLOW"/>
+			</otherwise>
+		</choice>
+		<json-logger:logger doc:name="Logger" doc:id="d5c46fa0-14bd-42a3-82f0-339201af0aab" config-ref="JSON_Logger_Config" message="Finished syncing Salesforce Case to Snowflake DB" tracePoint="END"/>
+	</flow>
+	<sub-flow name="salesforce-to-snowflake-sync-real-time-USA-Sub_Flow" doc:id="3a9d6379-a7c2-4f9f-993a-ccdabd08c0ba" >
+		<choice doc:name="Choice" doc:id="9998c8fe-62f7-4877-85f0-49b681f29f1d" >
+			<when expression="#[vars.recordExists != null]">
+				<snowflake:update doc:name="Update Case Record" doc:id="426e14d9-2469-4e8c-81d0-a1c7fd718ffc" config-ref="Snowflake_Config">
+					<snowflake:sql ><![CDATA[UPDATE case_usa SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:update>
+			</when>
+			<otherwise>
+				<snowflake:insert doc:name="Insert Case Record" doc:id="8d2a5201-c2d3-4511-91dd-ec2c427a8e97" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[INSERT INTO case_usa (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:insert>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="salesforce-to-snowflake-sync-real-time-CAN-Sub_Flow" doc:id="1d7d94a5-f0bb-426d-93bc-517f7b0d3128" >
+		<choice doc:name="Choice" doc:id="e7fced5b-46f4-444d-bf4c-869fe1973059" >
+			<when expression="#[vars.recordExists != null]" >
+				<snowflake:update doc:name="Update Case Record" doc:id="fb635d50-e62d-4676-a766-8af9c8140ebd" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[UPDATE case_can SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:update>
+			</when>
+			<otherwise >
+				<snowflake:insert doc:name="Insert Case Record" doc:id="5c0f0661-c210-40a7-b45c-a9597e14cc0e" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[INSERT INTO case_can (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:insert>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="salesforce-to-snowflake-sync-real-time-AUS-Sub_Flow" doc:id="14bc4f94-2c45-4bf6-ba52-0640927092e7" >
+		<choice doc:name="Choice" doc:id="a00603cd-3337-403c-91be-24522d3213be" >
+			<when expression="#[vars.recordExists != null]" >
+				<snowflake:update doc:name="Update Case Record" doc:id="50acd1dc-6521-4f31-a163-f7432019847c" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[UPDATE case_aus SET case_number= :case_number, origin = :origin, reason = :reason, contact_email = :contact_email, country = :country, created_date = :created_date, closed_date = :closed_date, last_modified = :last_modified WHERE case_number = :case_number]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:update>
+			</when>
+			<otherwise >
+				<snowflake:insert doc:name="Insert Case Record" doc:id="a26a1643-bd4c-4a97-97cd-8cc2e5e136eb" config-ref="Snowflake_Config" >
+					<snowflake:sql ><![CDATA[INSERT INTO case_aus (case_number, origin, reason, contact_email, country, created_date, closed_date, last_modified) VALUES (:case_number, :origin, :reason, :contact_email, :country, :closed_date, :created_date, :last_modified)]]></snowflake:sql>
+					<snowflake:input-parameters ><![CDATA[#[{"case_number": payload.case_number, "origin": payload.origin, "reason": payload.reason, "contact_email": payload.contact_email, "country": payload.country, "created_date":payload.created_date, "closed_date": payload.closed_date, "last_modified": payload.last_modified}]]]></snowflake:input-parameters>
+				</snowflake:insert>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>
